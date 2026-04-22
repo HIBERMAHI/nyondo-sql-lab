@@ -1,47 +1,53 @@
 const Database = require('better-sqlite3');
 const db = new Database('nyondo_stock.db');
 
-// --- SECURE FUNCTIONS ---
-
+/**
+ * TASK 5: SECURE SEARCH WITH VALIDATION
+ * Rules: Must be string, at least 2 chars, no < > or ;
+ */
 function searchProductSafe(name) {
-    // We use the ? placeholder. This is "Parameterized"
-    const query = 'SELECT * FROM products WHERE name LIKE ?';
-    const searchTerm = `%${name}%`; 
+    const specialChars = /[<>;]/;
     
-    console.log(`Executing Secure Query: ${query}`);
-    const rows = db.prepare(query).all(searchTerm);
-    console.log('Result:', rows, '\n');
-    return rows;
-}
-
-function loginSafe(username, password) {
-    // Both inputs use ? placeholders to prevent injection
-    const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
-    
-    console.log(`Executing Secure Query: ${query}`);
-    const row = db.prepare(query).get(username, password);
-    
-    if (row) {
-        console.log('Result: Login Successful!', row.username, '\n');
-    } else {
-        console.log('Result: Login Failed. Invalid credentials.\n');
+    // VALIDATION STEP
+    if (typeof name !== 'string' || name.length < 2 || specialChars.test(name)) {
+        console.error(`Rejected Search: "${name}" (Validation Failed)`);
+        return []; 
     }
-    return row;
+
+    // DATABASE STEP
+    const query = 'SELECT * FROM products WHERE name LIKE ?';
+    return db.prepare(query).all(`%${name}%`);
 }
 
-// --- TASK 4: THE SECURITY TESTS ---
-// These attacks worked in Task 3, but must return [] or undefined here.
+/**
+ * TASK 5: SECURE LOGIN WITH VALIDATION
+ * Rules: Username no spaces/not empty. Password at least 6 chars.
+ */
+function loginSafe(username, password) {
+    // VALIDATION STEP
+    if (!username || typeof username !== 'string' || username.includes(' ')) {
+        console.error(`Rejected Login: Invalid username format.`);
+        return undefined;
+    }
+    if (typeof password !== 'string' || password.length < 6) {
+        console.error(`Rejected Login: Password too short.`);
+        return undefined;
+    }
 
-console.log("--- Test 1: Blocking Search Bypass ---");
-searchProductSafe("' OR 1=1--");
+    // DATABASE STEP
+    const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
+    return db.prepare(query).get(username, password);
+}
 
-console.log("--- Test 2: Blocking UNION Attack ---");
-searchProductSafe("' UNION SELECT id, username, password, role FROM users--");
+// --- THE 6 TEST CASES FROM YOUR LAB MANUAL ---
+console.log("--- Task 5: Running Final Tests ---");
 
-console.log("--- Test 3: Blocking Login Comment Bypass ---");
-loginSafe("admin'--", "anything");
+console.log('Test 1 (cement):', searchProductSafe('cement'));        
+console.log('Test 2 (empty):', searchProductSafe(''));                 
+console.log('Test 3 (script):', searchProductSafe('<script>'));   
 
-console.log("--- Test 4: Blocking Always-True Login ---");
-loginSafe("' OR '1'='1", "' OR '1'='1");
+console.log('Test 4 (Login OK):', loginSafe('admin', 'admin123') ? "Success" : "Failed");
+console.log('Test 5 (Login Short):', loginSafe('admin', 'ab') ? "Success" : "Failed");
+console.log('Test 6 (Login Space):', loginSafe('ad min', 'pass123') ? "Success" : "Failed");
 
 db.close();
