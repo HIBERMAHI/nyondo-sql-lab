@@ -28,3 +28,28 @@ insertAll([
 // 3. Verify the work
 const rows = db.prepare('SELECT * FROM products').all();
 console.log(rows);
+
+
+
+// Add this to setup.js
+db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT DEFAULT 'attendant'
+    )
+`);
+
+const insertUser = db.prepare('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)');
+const userTransaction = db.transaction((users) => {
+    for (const user of users) insertUser.run(...user);
+});
+
+userTransaction([
+    ['admin', 'admin123', 'admin'],
+    ['fatuma', 'pass456', 'attendant'],
+    ['wasswa', 'pass789', 'manager']
+]);
+
+console.log("✅ Users table added!");

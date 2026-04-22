@@ -4,3 +4,5 @@
 
 
 Task three "deleted product with ID 5 using DELETE COMMAND
+
+SELECT * FROM products where name like '%' OR 1=1 
