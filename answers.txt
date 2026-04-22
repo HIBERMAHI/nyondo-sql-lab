@@ -1,0 +1,6 @@
+
+
+
+
+
+Task three "deleted product with ID 5 using DELETE COMMAND
