@@ -6,3 +6,9 @@
 Task three "deleted product with ID 5 using DELETE COMMAND
 
 SELECT * FROM products where name like '%' OR 1=1 
+
+
+
+Using ? placeholders (parameterized queries) prevents SQL injection because it treats user input strictly as data rather than executable code. In an f-string or template literal, the attacker can insert characters like ' or -- to change the logic of the SQL command.
+
+With a parameterized query, the database is pre-compiled with the command structure first. When the user input is sent later, the database knows exactly where the "name" or "password" should be and will not let that input escape its "box" to run other commands like UNION.
